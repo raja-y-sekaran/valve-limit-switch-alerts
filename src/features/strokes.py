@@ -1,19 +1,8 @@
-"""Turn raw SOE records (command and limit-switch transitions) into one row per valve stroke."""
+"""Turn prepared SOE records (command and limit-switch transitions) into one row per valve stroke."""
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-
-
-def load_events(path) -> pd.DataFrame:
-    return prepare_events(pd.read_csv(path))
-
-
-def prepare_events(e: pd.DataFrame) -> pd.DataFrame:
-    e = e.copy()
-    e["ts"] = pd.to_datetime(e.timestamp, format="ISO8601")
-    e[["tag", "signal"]] = e.point.str.rsplit(".", n=1, expand=True)
-    return e.sort_values("ts", kind="stable").reset_index(drop=True)
 
 
 def parse_strokes(events: pd.DataFrame, register: pd.DataFrame, timeout_factor: float = 3.0):

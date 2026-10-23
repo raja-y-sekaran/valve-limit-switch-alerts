@@ -1,0 +1,6 @@
+{
+  "model": "Per-valve, per-direction baseline of stroke and breakaway time (median and MAD), learned from the first 60 days of complete strokes (at least 4); alert rules in src/alerts/rules.py compare against it",
+  "trend": "EWMA (lambda 0.25) of log(stroke time / baseline); slow_trend above +12% with three strokes over +5%",
+  "training_data": "synthetic SOE log (src/data/generate_events.py), one year, 45 valves",
+  "intended_use": "demonstration on synthetic data; baselines must be relearned after valve maintenance and checked on the plant's own SOE history before use"
+}

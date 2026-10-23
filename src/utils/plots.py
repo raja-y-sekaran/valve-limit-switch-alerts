@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from .pipeline import DOCS
+from src.utils.paths import FIGURES as DOCS
 
 BLUE, ORANGE, RED, AQUA, INK, MUTED, GRID = "#2a78d6", "#eb6834", "#e34948", "#1baf7a", "#0b0b0b", "#52514e", "#e4e3df"
 
@@ -56,7 +56,6 @@ def drift_timeline(strokes, alerts, dcs, det, reg, base, tag=None):
     ax.legend(frameon=False, fontsize=8, loc="lower right")
     fig.text(0.01, 0.01, "Synthetic SOE data.", fontsize=7.5, color=MUTED)
     fig.tight_layout(rect=(0, 0.03, 1, 1))
-    DOCS.mkdir(exist_ok=True)
     fig.savefig(DOCS / "drift_timeline.png")
     plt.close(fig)
 

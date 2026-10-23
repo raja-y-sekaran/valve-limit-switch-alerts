@@ -3,10 +3,12 @@ from pathlib import Path
 
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from valve_alerts.alerts import baselines, dcs_alarms, raw_alerts, shelve  # noqa: E402
-from valve_alerts.strokes import parse_strokes, prepare_events  # noqa: E402
+from src.alerts.rules import dcs_alarms, raw_alerts, shelve  # noqa: E402
+from src.data.preprocess import prepare_events  # noqa: E402
+from src.models.baseline import baselines  # noqa: E402
+from src.features.strokes import parse_strokes  # noqa: E402
 
 REG = pd.DataFrame([dict(tag="XV-1", service="process on/off", strokes_per_day=4, open_s=5.0, close_s=4.0,
                          breakaway_s=0.5, close_limit_s=8.0, open_limit_s=10.0)])

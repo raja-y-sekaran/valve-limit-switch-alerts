@@ -1,17 +1,9 @@
-"""Run parsing, alerting and scoring against the injected faults; compare with plain DCS alarms."""
+"""Score operator alerts and plain DCS alarms against the injected faults; repeat over several synthetic fleets."""
 from __future__ import annotations
-
-import json
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from .alerts import baselines, dcs_alarms, raw_alerts, shelve
-from .strokes import load_events, parse_strokes
-
-ROOT = Path(__file__).resolve().parents[2]
-DATA, OUT, DOCS = ROOT / "data", ROOT / "outputs", ROOT / "docs"
 OURS = {"drift": ["slow_trend", "limit_exceeded"], "sticking": ["sticking", "limit_exceeded"], "no_move": ["fail_to_move"],
         "switch": ["not_confirmed"], "chatter": ["chattering"]}
 # The alert that names the cause, used to check the diagnosis rather than just the timing.
@@ -57,25 +49,33 @@ def evaluate(alerts, dcs, faults, register):
     return det, load
 
 
-def run():
-    OUT.mkdir(exist_ok=True)
-    reg = pd.read_csv(DATA / "valve_register.csv")
-    faults = pd.read_csv(DATA / "ground_truth" / "faults.csv")
-    strokes, uncmd = parse_strokes(load_events(DATA / "soe_events.csv.gz"), reg)
-    base = baselines(strokes)
-    alerts = shelve(raw_alerts(strokes, uncmd, reg, base))
-    dcs = dcs_alarms(strokes, uncmd, reg)
-    det, load = evaluate(alerts, dcs, faults, reg)
-    summary = (det.groupby("fault").agg(faults=("tag", "size"), detected=("alert_first", lambda s: int(s.notna().sum())),
-                                         dcs_detected=("dcs_first", lambda s: int(s.notna().sum())),
-                                         cause_named=("cause_named", "sum"),
-                                         median_alert_delay_days=("alert_delay_days", "median"),
-                                         median_earlier_than_dcs_days=("earlier_than_dcs_days", "median"))
-               .round(2).reset_index())
-    strokes.to_csv(OUT / "strokes.csv.gz", index=False)
-    alerts.to_csv(OUT / "operator_alerts.csv", index=False)
-    det.to_csv(OUT / "fault_detection.csv", index=False)
-    base.to_csv(OUT / "valve_baselines.csv", index=False)
-    (OUT / "metrics.json").write_text(json.dumps(dict(load=load, by_fault=summary.to_dict("records"),
-                                                      strokes=strokes.status.value_counts().to_dict()), indent=2, default=str))
-    return strokes, alerts, dcs, det, summary, load, reg, faults, base
+def robustness(seeds=(1, 2, 3, 4, 5, 42)):
+    from src.alerts.rules import dcs_alarms, raw_alerts, shelve
+    from src.data import generate_events as gen
+    from src.data.preprocess import prepare_events
+    from src.features.strokes import parse_strokes
+    from src.models.baseline import baselines
+
+    rows, dets = [], []
+    for seed in seeds:
+        reg, ev, faults = gen.generate(seed)
+        strokes, uncmd = parse_strokes(prepare_events(ev), reg)
+        alerts = shelve(raw_alerts(strokes, uncmd, reg, baselines(strokes)))
+        det, load = evaluate(alerts, dcs_alarms(strokes, uncmd, reg), faults, reg)
+        dets.append(det.assign(seed=seed))
+        rows.append(dict(seed=seed, faults=len(det), detected=int(det.alert_first.notna().sum()),
+                         cause_named=int(det.cause_named.sum()),
+                         false_alerts=load["false_alerts_healthy_valves"] + load["false_alerts_before_onset"],
+                         alerts=load["alerts_total"], dcs_alarms=load["dcs_alarms_total"]))
+    r, d = pd.DataFrame(rows), pd.concat(dets)
+    print("| Seed | Faults | Detected | Cause named | False alerts | Operator alerts | Plain DCS alarms |")
+    print("|---|---|---|---|---|---|---|")
+    for x in r.itertuples():
+        print(f"| {x.seed} | {x.faults} | {x.detected} | {x.cause_named} | {x.false_alerts} | {x.alerts:,} | {x.dcs_alarms:,} |")
+    dr = d[d.fault == "drift"]
+    xv = dr[dr.tag.str.startswith("XV")].earlier_than_dcs_days
+    sdv = dr[dr.tag.str.startswith("SDV")].earlier_than_dcs_days
+    print(f"\nDrift on process valves (XV): trend alert ahead of the DCS limit alarm by median {xv.median():.0f} days "
+          f"(range {xv.min():.0f}-{xv.max():.0f}, n={len(xv)})")
+    print(f"Drift on weekly-tested SDVs: median {sdv.median():.0f} days ahead (range {sdv.min():.0f}-{sdv.max():.0f}, n={len(sdv)})")
+    return r, d

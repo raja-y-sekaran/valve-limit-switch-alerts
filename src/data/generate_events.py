@@ -7,7 +7,7 @@ Each valve has a command output (<tag>.CMD: 1 = open, 0 = close) and two limit s
 Fleet: 30 process on/off valves (XV, cycling several times a day) and 15 shutdown valves
 (SDV, stroke-tested weekly, with a required closing time). Everything is invented.
 
-Injected faults (written to data/ground_truth/faults.csv with their onset time):
+Injected faults (written to data/raw/ground_truth/faults.csv with their onset time):
   drift      stroke time creeps up over weeks (actuator wear, packing friction, air supply)
   sticking   intermittent long breakaway (valve sticks before it moves)
   no_move    from onset the valve no longer leaves its end position on some strokes
@@ -15,18 +15,18 @@ Injected faults (written to data/ground_truth/faults.csv with their onset time):
   chatter    open switch toggles on and off with no command (loose cam, vibration)
 Healthy noise that must NOT raise alerts: ~1% of strokes are one-off slow strokes (cold start, low air).
 
-Usage:  python data/generate_events.py [--seed 42]
+Usage:  python -m src.data.generate_events [--seed 42]
 """
 from __future__ import annotations
 
 import argparse
 from datetime import datetime, timedelta
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-OUT = Path(__file__).resolve().parent
+from src.utils.paths import DATA_RAW as OUT  # noqa: E402
+from src.utils.paths import DATA_SAMPLE
 START = datetime(2025, 1, 1)
 DAYS = 365
 FAULTS = ["drift", "sticking", "no_move", "switch", "chatter"]
@@ -125,10 +125,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, default=42)
     v, e, truth = generate(ap.parse_args().seed)
-    (OUT / "ground_truth").mkdir(exist_ok=True)
     v.to_csv(OUT / "valve_register.csv", index=False)
     e.to_csv(OUT / "soe_events.csv.gz", index=False)
     truth.to_csv(OUT / "ground_truth" / "faults.csv", index=False)
+    keep = ["XV-1101", truth[truth.fault == "drift"].tag.iloc[0]]  # one healthy valve, one drifting valve
+    e[e.point.str.rsplit(".", n=1).str[0].isin(keep)].to_csv(DATA_SAMPLE / "soe_events_sample.csv", index=False)
     print(f"{len(v)} valves, {len(e)} SOE events, {len(truth)} faults:", truth.fault.value_counts().to_dict())
 
 

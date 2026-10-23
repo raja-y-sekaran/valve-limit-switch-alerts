@@ -19,24 +19,6 @@ import pandas as pd
 SHELVE = pd.Timedelta(hours=24)
 
 
-def baselines(strokes: pd.DataFrame, learn_days: int = 60, min_n: int = 4) -> pd.DataFrame:
-    """Median and MAD of each valve's stroke and breakaway times per direction, from its first weeks in service."""
-    ok = strokes[strokes.status == "complete"].copy()
-    t0 = ok.t_cmd.min()
-    rows = []
-    for (tag, d), g in ok.groupby(["tag", "direction"]):
-        learn = g[g.t_cmd < t0 + pd.Timedelta(days=learn_days)]
-        if len(learn) < min_n:
-            learn = g.head(min_n)
-        mad = lambda x: float(np.median(np.abs(x - np.median(x)))) * 1.4826
-        rows.append(dict(tag=tag, direction=d, n_learn=len(learn), base_total_s=float(learn.total_s.median()),
-                         mad_total_s=max(mad(learn.total_s), 0.02 * float(learn.total_s.median())),
-                         base_break_s=float(learn.breakaway_s.median()),
-                         mad_break_s=max(mad(learn.breakaway_s), 0.05 * float(learn.breakaway_s.median())),
-                         learn_until=learn.t_cmd.max()))
-    return pd.DataFrame(rows)
-
-
 def _limit(reg, tag, d):
     r = reg.loc[tag]
     return r.open_limit_s if d == "open" else r.close_limit_s
