@@ -1,0 +1,69 @@
+{
+  "load": {
+    "alerts_total": 2044,
+    "alerts_suppressed_repeats": 2317,
+    "dcs_alarms_total": 10156,
+    "alerts_per_day_mean": 7.1,
+    "dcs_alarms_per_day_mean": 35.1,
+    "alerts_peak_day": 16,
+    "dcs_peak_day": 86,
+    "false_alerts_healthy_valves": 0,
+    "false_alerts_before_onset": 0,
+    "healthy_valves": 25,
+    "chatter_valves_dcs_alarms": 6470,
+    "chatter_valves_operator_alerts": 613
+  },
+  "by_fault": [
+    {
+      "fault": "chatter",
+      "faults": 4,
+      "detected": 4,
+      "dcs_detected": 4,
+      "cause_named": 4,
+      "median_alert_delay_days": 0.14,
+      "median_earlier_than_dcs_days": 0.0
+    },
+    {
+      "fault": "drift",
+      "faults": 4,
+      "detected": 4,
+      "dcs_detected": 4,
+      "cause_named": 4,
+      "median_alert_delay_days": 14.04,
+      "median_earlier_than_dcs_days": 28.12
+    },
+    {
+      "fault": "no_move",
+      "faults": 4,
+      "detected": 4,
+      "dcs_detected": 4,
+      "cause_named": 4,
+      "median_alert_delay_days": 5.66,
+      "median_earlier_than_dcs_days": 0.0
+    },
+    {
+      "fault": "sticking",
+      "faults": 4,
+      "detected": 4,
+      "dcs_detected": 4,
+      "cause_named": 4,
+      "median_alert_delay_days": 1.17,
+      "median_earlier_than_dcs_days": 0.0
+    },
+    {
+      "fault": "switch",
+      "faults": 4,
+      "detected": 4,
+      "dcs_detected": 4,
+      "cause_named": 4,
+      "median_alert_delay_days": 0.37,
+      "median_earlier_than_dcs_days": 0.0
+    }
+  ],
+  "strokes": {
+    "complete": 40587,
+    "not_confirmed": 1350,
+    "complete_start_switch_not_made": 1350,
+    "no_move": 368
+  }
+}
