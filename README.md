@@ -2,7 +2,7 @@
 
 **Use the limit-switch timing every on/off and shutdown valve already sends to the DCS to warn operators and maintenance before a valve fails to close in time, and to replace floods of raw position alarms with a few alerts that name the likely cause.**
 
-![CI](https://github.com/rajapune-create/valve-limit-switch-alerts/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/raja-y-sekaran/valve-limit-switch-alerts/actions/workflows/ci.yml/badge.svg)
 
 ![Slow-stroke drift caught before the travel limit](reports/figures/drift_timeline.png)
 
