@@ -180,4 +180,6 @@ This is a public re-implementation of a personal prototype built on sample data.
 
 Built with Claude Code; design, requirements and validation by Raja (Rajayoganandha Sekaran).
 
+Contact: instruraja@yahoo.com
+
 Licence: MIT.
